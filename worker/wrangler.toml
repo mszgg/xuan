@@ -1,0 +1,10 @@
+name = "lingji-analysis-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-15"
+
+# 本地 AI 解读测试：复制 .dev.vars.example 为 .dev.vars 后填入值，绝不提交 .dev.vars。
+# 生产环境：用 `wrangler secret put AI_API_KEY` 保存密钥，绝不写入本文件。
+# [vars]
+# AI_BASE_URL = "https://your-gateway.example/v1"
+# AI_MODEL = "your-model-name"
+# ALLOWED_ORIGIN = "https://your-pages-domain.pages.dev"

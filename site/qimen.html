@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>奇门遁甲 · 灵机阁</title>
+    <link rel="stylesheet" href="tool.css" />
+    <link rel="stylesheet" href="tool-fix.css" />
+  </head>
+  <body>
+    <div class="tool-shell">
+      <nav class="tool-nav">
+        <a class="tool-brand" href="index.html"><span>✦</span> 灵机阁</a
+        ><a href="index.html">← 返回首页</a>
+      </nav>
+      <header class="tool-hero">
+        <div class="kicker">Strategic Direction System</div>
+        <h1>奇门遁甲</h1>
+        <p>在重要选择前，结合时间、方向与行动目标，整理更清晰的决策视角。</p>
+      </header>
+      <div class="progress">
+        <span><b>1</b>描述目标</span><span><b>2</b>建立时盘</span
+        ><span><b>3</b>获得策略</span>
+      </div>
+      <main class="tool-main">
+        <form class="form-card tool-form">
+          <h2>你的决策议题</h2>
+          <p>请用一两句话描述当下最重要的目标，静态版本会展示策略结果样式。</p>
+          <div class="fields">
+            <div class="field wide">
+              <label>问题或目标</label
+              ><textarea
+                required
+                placeholder="例如：是否在本月启动新的项目？"
+              ></textarea>
+            </div>
+            <div class="field">
+              <label>议题类别</label
+              ><select>
+                <option>综合决策</option>
+                <option>事业与行动</option>
+                <option>财富与投资</option>
+                <option>关系与合作</option>
+                <option>学习与创作</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>分析时间</label><input type="datetime-local" />
+            </div>
+            <div class="field">
+              <label>当前城市（可选）</label
+              ><input placeholder="例如：深圳市" />
+            </div>
+            <div class="field">
+              <label>出生日期（可选）</label><input type="date" />
+            </div>
+          </div>
+          <button class="submit" type="submit">开始策略分析 →</button>
+          <section class="result">
+            <h3>策略盘已准备好</h3>
+            <p>
+              这是静态演示结果。实际接入后会在此给出可行动的时间窗口、方向提示与风险观察。
+            </p>
+            <div class="result-grid">
+              <div><b>行动方向</b>识别优先路径</div>
+              <div><b>时间窗口</b>梳理行动节奏</div>
+              <div><b>注意事项</b>提前观察阻碍</div>
+            </div>
+          </section>
+        </form>
+        <div class="safe">
+          <span>✦ 决策辅助工具</span><span>✦ 目标导向提问</span
+          ><span>✦ 静态演示版本</span>
+        </div>
+      </main>
+    </div>
+    <script src="tool.js"></script>
+  </body>
+</html>

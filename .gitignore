@@ -1,0 +1,20 @@
+# Generated static deployment artifacts
+/pages-deploy/
+/pages-deploy.zip
+
+# Node / Cloudflare local state
+/worker/node_modules/
+/worker/.wrangler/
+/worker/.dev.vars
+/worker/.wrangler*.log
+
+# Logs and editor / operating-system metadata
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Research material is local reference only. Keep the source index, not raw clones/text corpora.
+/research/*
+!/research/UPSTREAM_SOURCES.md

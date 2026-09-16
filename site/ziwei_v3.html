@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>紫微斗数 · 灵机阁</title>
+    <link rel="stylesheet" href="tool.css" />
+    <link rel="stylesheet" href="tool-fix.css" />
+  </head>
+  <body>
+    <div class="tool-shell">
+      <nav class="tool-nav">
+        <a class="tool-brand" href="index.html"><span>✦</span> 灵机阁</a
+        ><a href="index.html">← 返回首页</a>
+      </nav>
+      <header class="tool-hero">
+        <div class="kicker">Purple Star Astrology</div>
+        <h1>紫微斗数</h1>
+        <p>用十二宫和星曜关系，描绘人格、关系、事业与人生周期的完整地图。</p>
+      </header>
+      <div class="progress">
+        <span><b>1</b>填写信息</span><span><b>2</b>绘制星盘</span
+        ><span><b>3</b>查看宫位</span>
+      </div>
+      <main class="tool-main">
+        <form class="form-card tool-form">
+          <h2>绘制你的十二宫</h2>
+          <p>准确出生时间有助于静态流程模拟；实际排盘需接入专业历法服务。</p>
+          <div class="fields">
+            <div class="field">
+              <label>出生日期与时间</label
+              ><input required type="datetime-local" />
+            </div>
+            <div class="field">
+              <label>性别</label
+              ><select required>
+                <option value="">请选择</option>
+                <option>男</option>
+                <option>女</option>
+                <option>不透露</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>出生地点</label
+              ><input required placeholder="例如：北京市" />
+            </div>
+            <div class="field">
+              <label>当前所在地（可选）</label
+              ><input placeholder="例如：杭州市" />
+            </div>
+            <div class="field wide">
+              <label>重点想看的宫位</label
+              ><select>
+                <option>完整命盘概览</option>
+                <option>命宫 · 性格与人生方向</option>
+                <option>官禄宫 · 事业与社会角色</option>
+                <option>夫妻宫 · 关系与合作</option>
+                <option>财帛宫 · 财富与资源</option>
+                <option>福德宫 · 内在世界</option>
+              </select>
+            </div>
+            <div class="field wide">
+              <label>你的问题（可选）</label
+              ><textarea
+                placeholder="例如：今年是否适合转换职业方向？"
+              ></textarea>
+            </div>
+          </div>
+          <button class="submit" type="submit">绘制我的命盘 →</button>
+          <section class="result">
+            <h3>十二宫星图已生成</h3>
+            <p>
+              这是静态演示状态。正式版本将在此呈现命宫、官禄、财帛等宫位关系，以及十年周期和年度提示。
+            </p>
+            <div class="result-grid">
+              <div><b>命宫</b>人格蓝图与人生主轴</div>
+              <div><b>官禄宫</b>事业路径与角色能量</div>
+              <div><b>流年</b>阶段性机会与提醒</div>
+            </div>
+          </section>
+        </form>
+        <div class="safe">
+          <span>✦ 本地演示</span><span>✦ 十二宫框架</span
+          ><span>✦ 可扩展报告页</span>
+        </div>
+      </main>
+    </div>
+    <script src="tool.js"></script>
+  </body>
+</html>

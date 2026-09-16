@@ -1,0 +1,173 @@
+/* Chinese display type needs looser tracking than the original Latin treatment. */
+.hero h1 {
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  line-height: 1.02;
+  letter-spacing: .08em;
+  text-transform: none;
+  font-style: normal;
+  font-synthesis: none;
+  transform: skewX(-7deg);
+  transform-origin: left center;
+}
+
+.hero h1 em { font-style: normal; }
+
+/* Pointer constellation trail */
+.cursor-spark {
+  --size: 8px;
+  position: fixed;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--turn));
+  animation: spark-drift .72s ease-out forwards;
+}
+
+.cursor-spark::before,
+.cursor-spark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff4ce;
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%);
+  filter: drop-shadow(0 0 3px #d7aa55) drop-shadow(0 0 8px #d7aa5599);
+}
+
+.cursor-spark::after { transform: rotate(45deg) scale(.62); opacity: .7; }
+.cursor-spark--large { --size: 18px; }
+
+@keyframes spark-drift {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--turn)) scale(.35); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -105%) rotate(calc(var(--turn) + 35deg)) scale(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) { .cursor-spark { display: none; } }
+
+/* Generated celestial artwork used as the complete hero backdrop. */
+.hero {
+  background-image:
+    linear-gradient(90deg, rgba(3, 9, 22, .46) 0%, rgba(3, 9, 22, .08) 48%, rgba(3, 9, 22, .38) 100%),
+    url("assets/hero-celestial.webp");
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.hero::after {
+  background: linear-gradient(180deg, rgba(2, 6, 16, .05), rgba(2, 6, 16, .28));
+}
+
+.hero .cosmos,
+.hero .orbital,
+.hero .planet {
+  visibility: hidden;
+}
+
+/* Persistent glass navigation floating above every section. */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  background: transparent;
+  border-bottom-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* Hero CTA: outlined at rest, filled from left to right on hover. */
+.hero-actions .primary {
+  color: #f6e4b7;
+  background-color: transparent;
+  background-image: linear-gradient(110deg, #b58136, #e2c57e);
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: 0 100%;
+  border-color: rgba(240, 207, 133, .9);
+  box-shadow: none;
+  transition: background-size .48s cubic-bezier(.22, 1, .36, 1), color .28s ease, border-color .28s ease;
+}
+
+.hero-actions .primary:hover,
+.hero-actions .primary:focus-visible {
+  color: #17120d;
+  background-size: 100% 100%;
+  border-color: #f3d99b;
+}
+
+/* Appears after 18% page progress and stays clear of the content edge. */
+.back-to-top {
+  position: fixed;
+  right: clamp(18px, 2.8vw, 42px);
+  bottom: clamp(18px, 3vw, 42px);
+  width: 48px;
+  height: 48px;
+  z-index: 1001;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #f3d48d;
+  font: 300 25px/1 "Space Grotesk", sans-serif;
+  background: rgba(5, 12, 25, .72);
+  border: 1px solid rgba(232, 195, 112, .72);
+  border-radius: 50%;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .22);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity .25s ease, transform .25s ease, visibility .25s, background-color .25s ease;
+}
+
+.back-to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top:hover,
+.back-to-top:focus-visible {
+  color: #17120d;
+  background: #dfbd73;
+  outline: none;
+}
+
+/* Feature cards become active only while hovered or keyboard-focused. */
+.feature-card,
+.feature-card.featured {
+  color: #162033;
+  background: #f9f4e8;
+  transform: none;
+  box-shadow: none;
+  transition: background-color .28s ease, color .28s ease, border-color .28s ease, box-shadow .28s ease, transform .28s ease;
+}
+
+.feature-card:hover,
+.feature-card:focus-within {
+  color: #f8f4e7;
+  background: #152a47;
+  border-color: #d6aa58;
+  box-shadow: 0 14px 28px rgba(6, 21, 40, .2);
+  animation: feature-card-pop .4s cubic-bezier(.22, 1.2, .36, 1) both;
+}
+
+@keyframes feature-card-pop {
+  0% { transform: translateY(0); }
+  62% { transform: translateY(-7px); }
+  100% { transform: translateY(-7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-card:hover,
+  .feature-card:focus-within { animation: none; }
+}
