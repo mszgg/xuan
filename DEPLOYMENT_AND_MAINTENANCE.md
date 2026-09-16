@@ -26,6 +26,34 @@ E:\xuan\scripts\          维护辅助脚本
 用户浏览器 → 静态站点 bazi.html → lingji-analysis-api → AI 网关 → 返回解读
 ```
 
+## 本地排盘依赖与奇门口径
+
+排盘不是由大模型生成。API Worker 先在本地计算结构化结果，再仅将结果和用户问题发送到 AI 网关生成文字解读。
+
+| 模块 | 本地依赖 | 说明 |
+| --- | --- | --- |
+| 八字、择日 | `lunar-javascript@1.7.7` | 四柱/历法与黄历候选日计算 |
+| 紫微斗数 | `iztro@2.6.1` | 十二宫、星曜命盘计算 |
+| 奇门遁甲 | `3meta@2.6.0` | 时家转盘九宫、局数、门星神、值符值使与格局摘要 |
+
+`3meta` 是本地 MIT 依赖，不调用 3meta 官方 API，也不需要密钥或额外按次费用。当前奇门接口返回 `qimen-hour-chart-1`，采用以下固定口径：
+
+- 时家转盘奇门、拆补法；
+- `Asia/Shanghai` 墙上时间；
+- 暂不做真太阳时、经度或历史夏令时校正；
+- AI 只解释 Worker 返回的完整九宫盘，不负责起盘。
+
+### 奇门回归验证
+
+`worker/test/qimen.test.ts` 固定了 8 组公开交叉验证样例，覆盖不同年份、阴阳遁与节气时段。其局数和三元已与 3meta 在线盘及 Mingpan 公共排盘结果逐项比对后记录。每次修改奇门逻辑或升级 `3meta` 前后必须执行：
+
+```powershell
+cd E:\xuan\worker
+npm test -- qimen.test.ts
+```
+
+若任何样例变化，不应直接更新测试期望值；先重新与独立公开参考盘交叉核对，并记录采用的时间、时区与起局口径。
+
 ## 敏感配置
 
 以下配置必须保存在 Cloudflare Worker Secret 中，绝不可写进 HTML、JavaScript、`wrangler.toml` 或提交到版本库：
@@ -136,6 +164,8 @@ npm run deploy
 
 随后测试健康检查和八字提交。静态网站不需要重新上传，除非接口路径或前端展示契约发生变化。
 
+若改动 `worker/src/calculators`、升级 `lunar-javascript`、`iztro` 或 `3meta`，除上述命令外，还要分别提交对应模块的预览请求；奇门必须通过“奇门回归验证”。
+
 ### 只修改网页样式或交互
 
 例如修改 `site/` 中的 `bazi.html`、`tool.js`、CSS 或图片：
@@ -169,6 +199,7 @@ npm run deploy
 | 网页可以打开，但提交后提示网络错误 | `bazi.html` 的 `data-api-base` 是否为 API Worker 地址；`ALLOWED_ORIGIN` 是否为当前静态站点 Origin |
 | API 返回 `503 ai_not_configured` | 重新设置 `AI_API_KEY`、`AI_BASE_URL`、`AI_MODEL` Secret |
 | API 返回 `502 ai_provider_error` | 检查 AI 网关地址、模型名、密钥权限和网关服务状态 |
+| 奇门结果与外部参考盘不一致 | 先确认输入时间、`Asia/Shanghai` 时区、时家转盘与拆补法口径一致；再运行 `npm test -- qimen.test.ts`，不要直接修改回归样例 |
 | 浏览器报 CORS 错误 | `ALLOWED_ORIGIN` 不应带末尾 `/`，并应与浏览器地址栏中的协议、域名完全一致 |
 | 首页图片 404 或无法显示 | 确认图片位于 `site/assets/`，CSS 路径为 `assets/文件名`，然后执行 `npm run deploy:site`；不要使用 Dashboard 静态上传器 |
 | 页面仍显示旧内容 | 确认 `npm run deploy:site` 成功完成，刷新时使用 Ctrl+F5 或无痕窗口 |

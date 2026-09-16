@@ -35,14 +35,19 @@ function buildPayload(module) {
 function summary(chart, module) {
   if (module === 'ziwei') return chart.palaces.map((palace) => `${palace.name}（${palace.earthlyBranch}）：${palace.majorStars.map((star) => star.name).join('、') || '无主星'}`).join('\n');
   if (module === 'calendar') return chart.candidates.map((day) => `${day.date}｜${day.lunar}｜${day.luck}｜宜：${day.yi.join('、')}｜冲：${day.chong}`).join('\n');
-  return `问事时间：${chart.questionTime}\n四柱：${Object.values(chart.pillars).join(' ')}\n节气：${chart.jieQi || '无'}\n${chart.policy.limitation}`;
+  return [
+    `问事时间：${chart.questionTime}`, `四柱：${Object.values(chart.pillars).join(' ')}`, `节气：${chart.jieQi || '无'}｜${chart.yuan || '无'}`,
+    `${chart.dun.type}遁${chart.dun.ju}局｜值符：${chart.duty.chiefStar}（${chart.duty.chiefStarPalace}）｜值使：${chart.duty.chiefDoor}（${chart.duty.chiefDoorPalace}）`,
+    '', '九宫盘：', ...chart.palaces.map((palace) => `${palace.palace}宫｜地盘${palace.earthPlate}｜天盘${palace.heavenPlate}｜${palace.door || '—'}｜${palace.star || '—'}｜${palace.deity || '—'}`),
+    chart.patterns.length ? `\n已识别格局：${chart.patterns.map((pattern) => `${pattern.name}${pattern.palace ? `（${pattern.palace}宫）` : ''}`).join('、')}` : '', `\n${chart.policy.limitation}`
+  ].filter(Boolean).join('\n');
 }
 
 function render(payload, module) {
   const result = form.querySelector('.result');
   result.replaceChildren();
   const title = document.createElement('h3');
-  title.textContent = module === 'ziwei' ? '紫微命盘与解读' : module === 'calendar' ? '择日候选与解读' : '奇门 AI 辅助参考';
+  title.textContent = module === 'ziwei' ? '紫微命盘与解读' : module === 'calendar' ? '择日候选与解读' : '奇门时盘与解读';
   const chart = document.createElement('pre');
   chart.className = 'calculated-chart';
   chart.textContent = summary(payload.chart, module);
@@ -64,7 +69,7 @@ form?.addEventListener('submit', async (event) => {
   submit.disabled = true;
   submit.textContent = '正在计算并生成解读…';
   setProgress(1);
-  status.textContent = module === 'calendar' ? '正在依据黄历宜忌筛选候选日期…' : module === 'ziwei' ? '正在生成十二宫命盘并准备解读…' : '正在整理问事时刻的节气与干支上下文…';
+  status.textContent = module === 'calendar' ? '正在依据黄历宜忌筛选候选日期…' : module === 'ziwei' ? '正在生成十二宫命盘并准备解读…' : '正在按时家转盘奇门拆补法起完整九宫盘…';
   try {
     const response = await fetch(apiUrl('/api/v1/analyses/interpret'), { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' }, body: JSON.stringify(buildPayload(module)) });
     const payload = await response.json();

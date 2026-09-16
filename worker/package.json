@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "3meta": "^2.6.0",
     "iztro": "^2.6.1",
     "lunar-javascript": "1.7.7"
   },

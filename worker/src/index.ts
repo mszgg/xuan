@@ -1,7 +1,7 @@
 import { calculateBazi } from './calculators/bazi';
 import { calculateZiwei } from './calculators/ziwei';
 import { selectCalendarDays } from './calculators/calendar';
-import { calculateQimenContext } from './calculators/qimen-context';
+import { calculateQimenChart } from './calculators/qimen';
 import type { AnalysisRequest } from './chart-types';
 import { AiConfigurationError, AiProviderError, interpretBazi, interpretStructured, type Env } from './llm';
 
@@ -51,9 +51,9 @@ export default {
         moduleName = '择日';
       } else if (payload.module === 'qimen') {
         if (!input.analysisDateTime) return respond({ error: 'invalid_input', message: '需要 analysisDateTime（含时区）。' }, 400);
-        chart = calculateQimenContext(input.analysisDateTime);
-        moduleName = '奇门 AI 辅助';
-        limitation = '这不是标准九宫时盘；仅基于问事时刻的节气与干支上下文提供 AI 辅助决策参考。';
+        chart = calculateQimenChart(input.analysisDateTime);
+        moduleName = '奇门遁甲（时家转盘）';
+        limitation = '盘面由本地时家转盘奇门拆补法计算；AI 只能依据返回的九宫盘与用户问题解读，不得将传统术数内容表述为确定性预测。';
       } else return respond({ error: 'module_not_enabled' }, 409);
       if (url.pathname === '/api/v1/analyses/interpret') {
         const question = payload.input.question?.trim();
