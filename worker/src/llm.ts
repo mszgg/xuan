@@ -63,3 +63,23 @@ export async function interpretBazi(env: Env, chart: BaziChartJson, question: st
   if (!content) throw new AiProviderError('AI 服务未返回可用解读。');
   return { content, sources: messages.sources, model: config.AI_MODEL };
 }
+
+export async function interpretStructured(env: Env, moduleName: string, chart: unknown, question: string, limitations?: string) {
+  const config = requiredEnv(env);
+  const system = [
+    `你是${moduleName}传统文化参考助手。只依据提供的结构化计算结果和用户问题作答。`,
+    '先列出可验证的计算依据，再给出温和、非确定性的观察。不得诊断疾病、提供投资/法律建议或预测确定事件。',
+    '回答使用简体中文，控制在 800 个汉字以内。',
+    limitations ? `边界：${limitations}` : ''
+  ].filter(Boolean).join('\n');
+  const endpoint = `${config.AI_BASE_URL.replace(/\/$/, '')}/chat/completions`;
+  let response: Response;
+  try {
+    response = await fetch(endpoint, { method: 'POST', headers: { authorization: `Bearer ${config.AI_API_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify({ model: config.AI_MODEL, messages: [{ role: 'system', content: system }, { role: 'user', content: `计算结果：\n${JSON.stringify(chart)}\n\n用户问题：${question}` }], temperature: 0.3, max_tokens: 1200 }) });
+  } catch { throw new AiProviderError('AI 服务不可连接。'); }
+  if (!response.ok) throw new AiProviderError(`AI 服务返回 ${response.status}。`);
+  const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  const content = payload.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new AiProviderError('AI 服务未返回可用解读。');
+  return { content, sources: [{ id: 'computed-chart', title: `${moduleName}计算结果` }], model: config.AI_MODEL };
+}

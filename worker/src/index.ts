@@ -1,6 +1,9 @@
 import { calculateBazi } from './calculators/bazi';
+import { calculateZiwei } from './calculators/ziwei';
+import { selectCalendarDays } from './calculators/calendar';
+import { calculateQimenContext } from './calculators/qimen-context';
 import type { AnalysisRequest } from './chart-types';
-import { AiConfigurationError, AiProviderError, interpretBazi, type Env } from './llm';
+import { AiConfigurationError, AiProviderError, interpretBazi, interpretStructured, type Env } from './llm';
 
 const json = (body: unknown, status = 200, headers: HeadersInit = {}) => new Response(JSON.stringify(body), {
   status,
@@ -33,20 +36,31 @@ export default {
 
     let payload: AnalysisRequest;
     try { payload = await request.json() as AnalysisRequest; } catch { return respond({ error: 'invalid_json' }, 400); }
-    if (payload.module !== 'bazi') {
-      return respond({ error: 'module_not_enabled', message: '当前只启用 bazi 预览计算。' }, 409);
-    }
-    if (!payload.input?.birthDateTime || (payload.input.gender !== 'male' && payload.input.gender !== 'female')) {
-      return respond({ error: 'invalid_input', message: '需要 birthDateTime（含时区）和 gender。' }, 400);
-    }
     try {
-      const chart = calculateBazi({ birthDateTime: payload.input.birthDateTime, gender: payload.input.gender });
+      const input = payload.input as AnalysisRequest['input'] & { eventType?: string; startDate?: string; endDate?: string; analysisDateTime?: string };
+      let chart: unknown;
+      let moduleName = '';
+      let limitation = '';
+      if (payload.module === 'bazi' || payload.module === 'ziwei') {
+        if (!input.birthDateTime || (input.gender !== 'male' && input.gender !== 'female')) return respond({ error: 'invalid_input', message: '需要 birthDateTime（含时区）和 gender。' }, 400);
+        chart = payload.module === 'bazi' ? calculateBazi({ birthDateTime: input.birthDateTime, gender: input.gender }) : calculateZiwei({ birthDateTime: input.birthDateTime, gender: input.gender });
+        moduleName = payload.module === 'bazi' ? '八字' : '紫微斗数';
+      } else if (payload.module === 'calendar') {
+        if (!input.eventType || !input.startDate || !input.endDate) return respond({ error: 'invalid_input', message: '需要 eventType、startDate 和 endDate。' }, 400);
+        chart = selectCalendarDays({ eventType: input.eventType, startDate: input.startDate, endDate: input.endDate });
+        moduleName = '择日';
+      } else if (payload.module === 'qimen') {
+        if (!input.analysisDateTime) return respond({ error: 'invalid_input', message: '需要 analysisDateTime（含时区）。' }, 400);
+        chart = calculateQimenContext(input.analysisDateTime);
+        moduleName = '奇门 AI 辅助';
+        limitation = '这不是标准九宫时盘；仅基于问事时刻的节气与干支上下文提供 AI 辅助决策参考。';
+      } else return respond({ error: 'module_not_enabled' }, 409);
       if (url.pathname === '/api/v1/analyses/interpret') {
         const question = payload.input.question?.trim();
         if (!question) return respond({ error: 'invalid_input', message: '解读需要 question。' }, 400);
         if (question.length > 500) return respond({ error: 'invalid_input', message: 'question 不能超过 500 个字符。' }, 400);
         try {
-          const interpretation = await interpretBazi(env, chart, question);
+          const interpretation = payload.module === 'bazi' ? await interpretBazi(env, chart as ReturnType<typeof calculateBazi>, question) : await interpretStructured(env, moduleName, chart, question, limitation);
           return respond({ status: 'interpreted', chart, interpretation });
         } catch (error) {
           if (error instanceof AiConfigurationError) return respond({ error: 'ai_not_configured', message: error.message }, 503);
