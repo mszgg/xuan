@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "dev:site": "wrangler dev --config wrangler.site.toml --port 8787",
+    "deploy:site": "wrangler deploy --config wrangler.site.toml",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

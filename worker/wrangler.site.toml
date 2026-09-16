@@ -1,0 +1,9 @@
+# Static website Worker. The API remains deployed with wrangler.toml.
+name = "young-bonus-6df5"
+main = "src/static-site.ts"
+compatibility_date = "2026-09-16"
+
+[assets]
+directory = "../site"
+binding = "ASSETS"
+run_worker_first = true

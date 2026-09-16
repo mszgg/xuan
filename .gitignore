@@ -1,7 +1,3 @@
-# Generated static deployment artifacts
-/pages-deploy*/
-/pages-deploy*.zip
-
 # Node / Cloudflare local state
 /worker/node_modules/
 /worker/.wrangler/

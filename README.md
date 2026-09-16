@@ -27,19 +27,20 @@ npm run dev -- --port 8788
 
 ## 发布
 
-完整的生产发布、密钥配置、静态上传包生成、验证与回滚说明见 [DEPLOYMENT_AND_MAINTENANCE.md](DEPLOYMENT_AND_MAINTENANCE.md)。
+完整的生产发布、密钥配置、静态网站部署、验证与回滚说明见 [DEPLOYMENT_AND_MAINTENANCE.md](DEPLOYMENT_AND_MAINTENANCE.md)。
 
-生成静态上传包：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File E:\xuan\scripts\prepare-static-upload.ps1 -OutputDirectory E:\xuan\pages-deploy-next
-```
-
-Worker 发布：
+API Worker 发布：
 
 ```powershell
 cd worker
 npm run deploy
+```
+
+静态网站发布（会包含 `site/assets/` 中的图片）：
+
+```powershell
+cd worker
+npm run deploy:site
 ```
 
 ## 安全与内容边界

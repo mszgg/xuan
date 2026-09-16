@@ -8,12 +8,10 @@
 E:\xuan\site\             静态网页源码；页面、样式、脚本和 assets 都只在这里修改
 E:\xuan\worker\           API Worker 源码、依赖、测试与本地 .dev.vars
 E:\xuan\research\         上游资料与研究文件，不参与网站静态发布包
-E:\xuan\scripts\          维护脚本
-E:\xuan\pages-deploy\     自动生成的静态上传目录；不要手动编辑
-E:\xuan\pages-deploy.zip  自动生成的 Cloudflare 上传包；不要作为源码编辑
+E:\xuan\scripts\          维护辅助脚本
 ```
 
-网页改动只应提交到 `site/`。重新发布静态站点前，再用脚本从 `site/` 生成 `pages-deploy.zip`。
+网页改动只应提交到 `site/`。图片也应保存在 `site/assets/`，CSS 使用普通相对路径（例如 `url("assets/hero-celestial.webp")`）；不要将图片 Base64 内嵌到 CSS。日常发布通过 Wrangler 直接部署整个 `site/` 目录。
 
 ## 当前线上架构
 
@@ -105,33 +103,23 @@ https://lingji-analysis-api.827793958.workers.dev/api/health
 {"ok":true}
 ```
 
-### 4. 生成静态上传包
+### 4. 发布静态网站
 
-在项目根目录执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File E:\xuan\scripts\prepare-static-upload.ps1
-```
-
-这会生成 `E:\xuan\pages-deploy.zip`，其中只包含网站运行需要的 HTML、CSS、JS 和 `assets`。它不会打包 `worker/node_modules`、研究资料或本地密钥文件。
-
-如果旧上传包仍存在，脚本会停止以避免覆盖。此时可指定一个新目录：
+静态网站使用 `worker/wrangler.site.toml` 配置，名称为 `young-bonus-6df5`。该配置只上传 `../site` 的全部内容（包括 `assets/`），不会更改 API Worker。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File E:\xuan\scripts\prepare-static-upload.ps1 -OutputDirectory E:\xuan\pages-deploy-next
+cd E:\xuan\worker
+npm run deploy:site
 ```
 
-### 5. 上传静态站点
+首次执行会使用已有的 Wrangler 登录状态；若尚未登录，先运行 `npx wrangler login`。完成后打开：
 
-在 Cloudflare Dashboard：
+```text
+https://young-bonus-6df5.827793958.workers.dev
+https://young-bonus-6df5.827793958.workers.dev/assets/hero-celestial.webp
+```
 
-1. 打开 **Compute → Workers & Pages**。
-2. 选择创建应用，选择直接上传静态资源（Direct Upload / Upload assets）。
-3. 上传上一步生成的 zip 文件。
-4. 完成部署后打开 `https://你的静态站点.workers.dev/bazi.html`。
-5. 填写性别、出生日期时间并提交，确认页面出现四柱和 AI 解读。
-
-当前静态站点是通过 Cloudflare 的直接上传功能托管在 Worker 域名下；即使界面文案显示为 Pages 或静态资源上传，只要部署地址可打开并能访问 `/bazi.html` 即可。
+第二个地址应直接显示图片。Wrangler 是图片、字体等二进制静态资源的正式发布方式；不要再使用 Dashboard 中只支持 HTML/CSS/JS 的“Upload static files”上传器。
 
 ## 日常维护流程
 
@@ -153,9 +141,8 @@ npm run deploy
 例如修改 `site/` 中的 `bazi.html`、`tool.js`、CSS 或图片：
 
 1. 确认 `bazi.html` 的 `data-api-base` 仍是 API Worker 地址。
-2. 重新运行 `prepare-static-upload.ps1`，使用新的输出目录名。
-3. 在 Cloudflare 静态站点项目中上传新的 zip / 创建新部署。
-4. 打开 `/bazi.html` 实测表单提交。
+2. 执行 `cd E:\xuan\worker` 后运行 `npm run deploy:site`。
+3. 打开首页、图片地址和 `/bazi.html` 实测表单提交。
 
 ### 同时修改前后端
 
@@ -163,7 +150,7 @@ npm run deploy
 
 1. 先部署向后兼容的 API Worker。
 2. 使用 PowerShell 或浏览器测试新接口。
-3. 生成并上传静态网站。
+3. 运行 `npm run deploy:site` 发布静态网站。
 4. 用线上静态网站测试完整链路。
 
 ## 上线后验证清单
@@ -183,7 +170,8 @@ npm run deploy
 | API 返回 `503 ai_not_configured` | 重新设置 `AI_API_KEY`、`AI_BASE_URL`、`AI_MODEL` Secret |
 | API 返回 `502 ai_provider_error` | 检查 AI 网关地址、模型名、密钥权限和网关服务状态 |
 | 浏览器报 CORS 错误 | `ALLOWED_ORIGIN` 不应带末尾 `/`，并应与浏览器地址栏中的协议、域名完全一致 |
-| 页面仍显示旧内容 | 确认上传了新 zip，刷新时使用 Ctrl+F5 或无痕窗口 |
+| 首页图片 404 或无法显示 | 确认图片位于 `site/assets/`，CSS 路径为 `assets/文件名`，然后执行 `npm run deploy:site`；不要使用 Dashboard 静态上传器 |
+| 页面仍显示旧内容 | 确认 `npm run deploy:site` 成功完成，刷新时使用 Ctrl+F5 或无痕窗口 |
 | `**标题**` 显示为星号 | 当前前端安全地以纯文本渲染 AI Markdown；这是显示优化项，不影响接口或结果 |
 
 ## 回滚
