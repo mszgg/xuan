@@ -1,6 +1,7 @@
 /* Chinese display type needs looser tracking than the original Latin treatment. */
 .hero h1 {
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: clamp(32px, 4.5vw, 69px);
   line-height: 1.02;
   letter-spacing: .08em;
   text-transform: none;
