@@ -1,10 +1,13 @@
 param(
-  [string]$OutputDirectory = 'E:\xuan\pages-deploy'
+  [string]$OutputDirectory
 )
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $siteRoot = Join-Path $projectRoot 'site'
+if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
+  $OutputDirectory = Join-Path $projectRoot "pages-deploy-$([guid]::NewGuid().ToString())"
+}
 $archivePath = "$OutputDirectory.zip"
 $staticFiles = @(
   'index.html', 'bazi.html', 'calendar.html', 'qimen.html', 'ziwei_v3.html',
