@@ -25,7 +25,24 @@ New-Item -ItemType Directory -Path $OutputDirectory | Out-Null
 foreach ($file in $staticFiles) {
   Copy-Item -LiteralPath (Join-Path $siteRoot $file) -Destination $OutputDirectory
 }
-Copy-Item -LiteralPath (Join-Path $siteRoot 'assets') -Destination $OutputDirectory -Recurse
+
+# The Cloudflare dashboard's static-file uploader accepts HTML, CSS and JS only.
+# Embed the homepage WebP image in the copied CSS so the upload has no separate image
+# asset that the dashboard could silently omit.
+$backgroundPath = Join-Path $siteRoot 'assets\hero-celestial.webp'
+if (-not (Test-Path -LiteralPath $backgroundPath)) {
+  throw "Homepage background image not found: $backgroundPath"
+}
+$backgroundData = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($backgroundPath))
+$fixCssPath = Join-Path $OutputDirectory 'fix.css'
+$fixCss = [System.IO.File]::ReadAllText($fixCssPath)
+$embeddedImage = "url(`"data:image/webp;base64,$backgroundData`")"
+$updatedFixCss = $fixCss.Replace('url("assets/hero-celestial.webp")', $embeddedImage)
+if ($updatedFixCss -eq $fixCss) {
+  throw 'Could not find the homepage background reference in fix.css.'
+}
+[System.IO.File]::WriteAllText($fixCssPath, $updatedFixCss, (New-Object System.Text.UTF8Encoding($false)))
+
 Compress-Archive -LiteralPath (Get-ChildItem -LiteralPath $OutputDirectory | Select-Object -ExpandProperty FullName) -DestinationPath $archivePath
 
 Write-Host "Static upload archive created: $archivePath"
