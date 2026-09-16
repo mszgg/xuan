@@ -12,6 +12,13 @@ function field(name) {
   return form.elements.namedItem(name)?.value?.trim() ?? '';
 }
 
+function setProgress(stage) {
+  document.querySelectorAll('.progress span').forEach((item, index) => {
+    item.classList.toggle('is-active', index === stage);
+    item.classList.toggle('is-complete', index < stage);
+  });
+}
+
 function buildPayload(module) {
   if (module === 'ziwei') {
     const focus = field('focus') || '完整命盘概览';
@@ -44,6 +51,7 @@ function render(payload, module) {
   interpretation.textContent = payload.interpretation.content;
   result.append(title, chart, interpretation);
   result.classList.add('visible');
+  setProgress(2);
   result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -55,13 +63,14 @@ form?.addEventListener('submit', async (event) => {
   if (!status) { status = document.createElement('p'); status.className = 'form-status'; form.querySelector('.result').before(status); }
   submit.disabled = true;
   submit.textContent = '正在计算并生成解读…';
-  status.textContent = '正在生成，请稍候。';
+  setProgress(1);
+  status.textContent = module === 'calendar' ? '正在依据黄历宜忌筛选候选日期…' : module === 'ziwei' ? '正在生成十二宫命盘并准备解读…' : '正在整理问事时刻的节气与干支上下文…';
   try {
     const response = await fetch(apiUrl('/api/v1/analyses/interpret'), { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' }, body: JSON.stringify(buildPayload(module)) });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.message || '暂时无法生成结果。');
     render(payload, module);
     status.textContent = '生成完成。';
-  } catch (error) { status.textContent = error instanceof Error ? error.message : '网络异常，请稍后重试。'; }
+  } catch (error) { setProgress(0); status.textContent = error instanceof Error ? error.message : '网络异常，请稍后重试。'; }
   finally { submit.disabled = false; submit.textContent = module === 'ziwei' ? '绘制我的命盘 →' : module === 'calendar' ? '寻找合适日期 →' : '开始策略分析 →'; }
 });
