@@ -8,7 +8,7 @@ $siteRoot = Join-Path $projectRoot 'site'
 $archivePath = "$OutputDirectory.zip"
 $staticFiles = @(
   'index.html', 'bazi.html', 'calendar.html', 'qimen.html', 'ziwei_v3.html',
-  'styles.css', 'fix.css', 'tool.css', 'tool-fix.css', 'script.js', 'tool.js'
+  'styles.css', 'fix.css', 'tool.css', 'tool-fix.css', 'script.js', 'tool.js', 'module-form.js'
 )
 
 if (Test-Path -LiteralPath $OutputDirectory) {
