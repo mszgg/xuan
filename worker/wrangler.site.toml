@@ -7,3 +7,7 @@ compatibility_date = "2026-09-16"
 directory = "../site"
 binding = "ASSETS"
 run_worker_first = true
+
+# 在 Cloudflare Dashboard 的此 Worker「Variables」中设置同名变量或 Secret。
+# Turnstile Site Key 会注入页面，是公开值；不要把 Secret Key 写在这里。
+# TURNSTILE_SITE_KEY = "0x..."

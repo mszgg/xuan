@@ -58,10 +58,11 @@ form?.addEventListener('submit', async event => {
   status.textContent = '正在排盘并生成解读，请稍候。';
   setProgress(1);
   try {
+    const turnstileToken = await window.getTurnstileToken(form);
     const response = await fetch(apiUrl('/api/v1/analyses/interpret'), {
       method: 'POST',
       headers: { 'content-type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ module: 'bazi', input: { gender, birthDateTime: birthDateTimeWithShanghaiOffset(birthDateTime), question } })
+      body: JSON.stringify({ module: 'bazi', turnstileToken, input: { gender, birthDateTime: birthDateTimeWithShanghaiOffset(birthDateTime), question } })
     });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.message || '暂时无法生成解读。');
@@ -71,6 +72,7 @@ form?.addEventListener('submit', async event => {
     setProgress(0);
     status.textContent = error instanceof Error ? error.message : '网络异常，请稍后再试。';
   } finally {
+    window.resetTurnstile?.();
     submit.disabled = false;
     submit.textContent = '生成我的八字解读 →';
   }

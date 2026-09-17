@@ -6,6 +6,8 @@ export interface Env {
   AI_BASE_URL?: string;
   AI_MODEL?: string;
   ALLOWED_ORIGIN?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  RATE_LIMITER: DurableObjectNamespace;
 }
 
 export class AiConfigurationError extends Error {}

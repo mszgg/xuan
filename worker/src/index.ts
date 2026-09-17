@@ -4,6 +4,15 @@ import { selectCalendarDays } from './calculators/calendar';
 import { calculateQimenChart } from './calculators/qimen';
 import type { AnalysisRequest } from './chart-types';
 import { AiConfigurationError, AiProviderError, interpretBazi, interpretStructured, type Env } from './llm';
+import type { RateLimitResult } from './rate-limiter';
+
+export { RateLimiter } from './rate-limiter';
+
+const MAX_REQUEST_BYTES = 16 * 1024;
+const RATE_LIMITS = {
+  '/api/v1/analyses/preview': { limit: 30, windowMs: 60_000 },
+  '/api/v1/analyses/interpret': { limit: 8, windowMs: 10 * 60_000 }
+} as const;
 
 const json = (body: unknown, status = 200, headers: HeadersInit = {}) => new Response(JSON.stringify(body), {
   status,
@@ -23,10 +32,42 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
   };
 }
 
+function clientKey(request: Request): string {
+  // Cloudflare sets this header from the connecting client; never accept a
+  // client-controlled X-Forwarded-For value as a limiter identity.
+  return request.headers.get('CF-Connecting-IP') ?? 'unknown';
+}
+
+async function checkRateLimit(request: Request, env: Env, path: keyof typeof RATE_LIMITS): Promise<RateLimitResult> {
+  const policy = RATE_LIMITS[path];
+  const id = env.RATE_LIMITER.idFromName(`${path}:${clientKey(request)}`);
+  const response = await env.RATE_LIMITER.get(id).fetch('https://rate-limiter/check', {
+    method: 'POST', body: JSON.stringify(policy)
+  });
+  if (!response.ok) return { allowed: false, retryAfterSeconds: 60 };
+  return response.json() as Promise<RateLimitResult>;
+}
+
+async function verifyTurnstile(token: string | undefined, request: Request, env: Env): Promise<boolean> {
+  if (!env.TURNSTILE_SECRET_KEY || !token) return false;
+  const form = new FormData();
+  form.set('secret', env.TURNSTILE_SECRET_KEY);
+  form.set('response', token);
+  const remoteIp = request.headers.get('CF-Connecting-IP');
+  if (remoteIp) form.set('remoteip', remoteIp);
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+    const result = await response.json() as { success?: boolean };
+    return result.success === true;
+  } catch {
+    return false;
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const cors = corsHeaders(request, env);
-    const respond = (body: unknown, status = 200) => json(body, status, cors);
+    const respond = (body: unknown, status = 200, headers: HeadersInit = {}) => json(body, status, { ...cors, ...headers });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const url = new URL(request.url);
     if (request.method === 'GET' && url.pathname === '/api/health') return respond({ ok: true });
@@ -34,8 +75,20 @@ export default {
       return respond({ error: 'not_found' }, 404);
     }
 
+    const contentLength = Number(request.headers.get('content-length') ?? '0');
+    if (!Number.isFinite(contentLength) || contentLength > MAX_REQUEST_BYTES) {
+      return respond({ error: 'request_too_large' }, 413);
+    }
+    const policyPath = url.pathname as keyof typeof RATE_LIMITS;
+    const rateLimit = await checkRateLimit(request, env, policyPath);
+    if (!rateLimit.allowed) return respond({ error: 'rate_limited' }, 429, { 'retry-after': String(rateLimit.retryAfterSeconds) });
+
     let payload: AnalysisRequest;
-    try { payload = await request.json() as AnalysisRequest; } catch { return respond({ error: 'invalid_json' }, 400); }
+    try {
+      const raw = await request.text();
+      if (new TextEncoder().encode(raw).byteLength > MAX_REQUEST_BYTES) return respond({ error: 'request_too_large' }, 413);
+      payload = JSON.parse(raw) as AnalysisRequest;
+    } catch { return respond({ error: 'invalid_json' }, 400); }
     try {
       const input = payload.input as AnalysisRequest['input'] & { eventType?: string; startDate?: string; endDate?: string; analysisDateTime?: string };
       let chart: unknown;
@@ -56,6 +109,8 @@ export default {
         limitation = '盘面由本地时家转盘奇门拆补法计算；AI 只能依据返回的九宫盘与用户问题解读，不得将传统术数内容表述为确定性预测。';
       } else return respond({ error: 'module_not_enabled' }, 409);
       if (url.pathname === '/api/v1/analyses/interpret') {
+        if (!env.TURNSTILE_SECRET_KEY) return respond({ error: 'security_not_configured' }, 503);
+        if (!await verifyTurnstile(payload.turnstileToken, request, env)) return respond({ error: 'verification_failed' }, 403);
         const question = payload.input.question?.trim();
         if (!question) return respond({ error: 'invalid_input', message: '解读需要 question。' }, 400);
         if (question.length > 500) return respond({ error: 'invalid_input', message: 'question 不能超过 500 个字符。' }, 400);
@@ -69,8 +124,8 @@ export default {
         }
       }
       return respond({ status: 'calculated', chart });
-    } catch (error) {
-      return respond({ error: 'calculation_failed', message: error instanceof Error ? error.message : '计算失败。' }, 422);
+    } catch {
+      return respond({ error: 'calculation_failed', message: '输入无法完成计算。' }, 422);
     }
   }
 };

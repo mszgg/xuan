@@ -64,6 +64,7 @@ npm test -- qimen.test.ts
 | `AI_BASE_URL` | OpenAI 兼容网关地址，通常以 `/v1` 结尾 |
 | `AI_MODEL` | 解读使用的模型名称 |
 | `ALLOWED_ORIGIN` | 允许调用 API 的静态站点来源，不带末尾 `/` |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile 的 Secret Key，仅 API Worker 使用 |
 
 当前 `ALLOWED_ORIGIN` 应设为：
 
@@ -103,6 +104,65 @@ npx wrangler secret put ALLOWED_ORIGIN
 ```
 
 `ALLOWED_ORIGIN` 的值必须是静态网站的完整 Origin，例如 `https://young-bonus-6df5.827793958.workers.dev`，没有结尾斜杠。
+
+### 启用人机验证与滥用防护
+
+网站的 AI 解读接口必须由 Turnstile 保护。先在 Cloudflare Dashboard 的 **Turnstile** 创建一个 Managed widget，将当前静态站点域名加入 Hostnames。
+
+#### Key 的职责与存放位置
+
+| 值 | 是否公开 | 存放位置 | 用途 |
+| --- | --- | --- | --- |
+| Turnstile Site Key | 是 | 静态站 Worker `young-bonus-6df5` 的 `TURNSTILE_SITE_KEY` 绑定 | 标识 widget；静态 Worker 将它注入网页 HTML，浏览器据此加载 Turnstile。 |
+| Turnstile Secret Key | 否 | API Worker `lingji-analysis-api` 的 `TURNSTILE_SECRET_KEY` Secret | API Worker 调用 Cloudflare `siteverify` 验证 token。绝不能传给浏览器、写入静态站或提交 Git。 |
+
+Site Key 被浏览器看到是正常且必要的；它本身不能验证 token 或调用 AI。只有 Secret Key 才能完成服务器端验证。
+
+#### 用 Wrangler 保存 Key
+
+在 `E:\xuan\worker` 执行以下命令。每条命令会提示粘贴对应的值，输入不会写入仓库或终端命令历史：
+
+```powershell
+# API Worker：粘贴 Turnstile 的 Secret Key（必须保密）
+npx wrangler secret put TURNSTILE_SECRET_KEY
+
+# 静态站 Worker：粘贴 Turnstile 的 Site Key（公开值）
+npx wrangler secret put TURNSTILE_SITE_KEY --config wrangler.site.toml
+```
+
+也可在 Cloudflare Dashboard → Worker → Settings → Variables 中设置同名绑定。`TURNSTILE_SITE_KEY` 可以是普通变量或 Secret；本项目使用 Secret 绑定统一通过 Wrangler 管理，但它仍会被注入最终 HTML。不要误把 Secret Key 填到 `TURNSTILE_SITE_KEY`。
+
+#### 完整请求流程
+
+```text
+1. 用户打开工具页面。
+2. 静态站 Worker 将 TURNSTILE_SITE_KEY 注入 HTML；浏览器加载 Cloudflare Turnstile widget。
+3. Turnstile 完成必要挑战后，在浏览器中签发短时有效的 token。
+4. 浏览器提交业务参数和 turnstileToken 到 API Worker 的 /api/v1/analyses/interpret。
+5. API Worker 先限制请求体大小，并向 Durable Object 按 CF-Connecting-IP 检查限流。
+6. 未超限时，API Worker 使用仅自己持有的 TURNSTILE_SECRET_KEY 调用 Cloudflare siteverify。
+7. siteverify 成功，API Worker 才调用 AI 网关；失败、过期或缺失 token 则返回 403，不消耗 AI 额度。
+8. 超出限流则直接返回 429 和 Retry-After，不调用 Turnstile 或 AI 网关。
+```
+
+这不是 Cloudflare WAF 在 Worker 之前的自动拦截：请求仍会到达 API Worker，但在 token 校验和限流通过前绝不会请求 AI 网关。
+
+#### 限流规则
+
+API Worker 使用 Durable Object 对每个 `CF-Connecting-IP` 独立计数：
+
+| 接口 | 限制 | 超限响应 |
+| --- | --- | --- |
+| `/api/v1/analyses/preview` | 每 IP 每分钟 30 次 | HTTP 429 |
+| `/api/v1/analyses/interpret` | 每 IP 每 10 分钟 8 次 | HTTP 429 + `Retry-After` |
+
+限流阈值定义于 `worker/src/index.ts` 的 `RATE_LIMITS`。Turnstile 会提高机器人自动化成本，但不能替代限流或全站预算控制；若 AI 费用需要严格上限，应额外实现每小时/每天的全站调用额度。
+
+#### 发布顺序
+
+先保存两个 Key，再依次部署 API Worker 和静态站 Worker。API 会拒绝没有有效 Turnstile token 的解读请求。
+
+静态站 Worker 会发送 CSP、禁止框架嵌入、禁止 MIME 嗅探等安全响应头。若新增第三方脚本、字体或 API 域名，必须先相应更新 `worker/src/static-site.ts` 的 CSP，否则浏览器会主动阻止它。
 
 ### 3. 发布 API Worker
 

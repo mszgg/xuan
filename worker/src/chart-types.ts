@@ -23,6 +23,8 @@ export interface BaziChartJson {
 
 export interface AnalysisRequest {
   module: 'bazi' | 'ziwei' | 'qimen' | 'calendar';
+  /** Cloudflare Turnstile token issued to the browser for this submission. */
+  turnstileToken?: string;
   input: {
     gender?: Gender;
     birthDateTime?: string;
