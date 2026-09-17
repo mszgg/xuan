@@ -13,8 +13,8 @@ body { color: #192d4b; background: #fff; }
 .progress::before { content: ""; position: absolute; z-index: 0; top: 14px; left: 16.7%; right: 16.7%; height: 2px; background: #e7edf3; }
 .progress span { position: relative; z-index: 1; transition: color .25s ease; }
 .progress b { width: 30px; height: 30px; color: #95a2b4; border-color: #e7ebf0; background: #f0f2f5; box-shadow: 0 0 0 5px #fff; transition: background .25s ease, color .25s ease, border-color .25s ease, transform .25s ease; }
-.progress span:first-child, .progress span.is-active, .progress span.is-complete { color: #079cc8; }
-.progress span:first-child b, .progress span.is-active b { color: #fff; background: #079cc8; border-color: #079cc8; transform: scale(1.08); }
+.progress span.is-active, .progress span.is-complete { color: #079cc8; }
+.progress span.is-active b { color: #fff; background: #079cc8; border-color: #079cc8; transform: scale(1.08); }
 .progress span.is-complete b { color: #fff; background: #3cb88a; border-color: #3cb88a; }
 .progress span.is-complete b { font-size: 0; }
 .progress span.is-complete b::after { content: "✓"; font-size: 14px; }
@@ -35,7 +35,13 @@ body { color: #192d4b; background: #fff; }
 
 .submit:disabled { cursor: wait; opacity: .72; }
 .form-status { min-height: 1.5em; margin: 14px 0 0 !important; color: #087fa7 !important; }
-.interpretation { margin-top: 24px; padding-top: 20px; border-top: 1px solid #d6e3f2; white-space: pre-wrap; line-height: 1.85; font-size: 14px; color: #344052; }
+.interpretation { margin-top: 24px; padding-top: 20px; border-top: 1px solid #d6e3f2; line-height: 1.85; font-size: 14px; color: #344052; }
+.interpretation h4 { margin: 22px 0 9px; color: #087fa7; font-size: 16px; }
+.interpretation h4:first-child { margin-top: 0; }
+.interpretation p { margin: 0 0 13px; line-height: inherit; color: inherit; }
+.interpretation ul, .interpretation ol { margin: 0 0 15px; padding-left: 1.45em; }
+.interpretation li { margin: 7px 0; padding-left: 3px; }
+.interpretation strong { color: #0a6e91; font-weight: 700; }
 .result-sources { margin-top: 18px !important; font-size: 12px !important; color: #73849a !important; }
 .calculated-chart { margin: 18px 0 0; padding: 18px; overflow-x: auto; white-space: pre-wrap; background: linear-gradient(135deg, #eff8fc, #f7fbfd); border: 1px solid #d6e3f2; border-radius: 8px; color: #24506c; font: 13px/1.85 "Noto Serif SC", serif; }
 @media (max-width: 620px) { .progress::before { left: 18%; right: 18%; } .progress { margin-bottom: 32px; } }

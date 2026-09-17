@@ -53,7 +53,8 @@ function render(payload, module) {
   chart.textContent = summary(payload.chart, module);
   const interpretation = document.createElement('div');
   interpretation.className = 'interpretation';
-  interpretation.textContent = payload.interpretation.content;
+  if (window.renderInterpretation) window.renderInterpretation(interpretation, payload.interpretation.content);
+  else interpretation.textContent = payload.interpretation.content;
   result.append(title, chart, interpretation);
   result.classList.add('visible');
   setProgress(2);
