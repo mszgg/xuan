@@ -3,7 +3,10 @@ body { color: #192d4b; background: #fff; }
 .tool-shell { padding-top: 76px; background: #fff; }
 .tool-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; width: 100%; background: #fff; border-bottom-color: #e6edf6; }
 .tool-brand { color: #1d2d46; }
-.tool-nav a:last-child { color: #21344f; }
+.tool-nav-actions a { color: #21344f; text-decoration: none; font: 12px "Space Grotesk", sans-serif; letter-spacing: 1px; }
+.tool-nav-actions { display: flex; align-items: center; gap: 16px; }
+.tool-nav .music-toggle { width: 36px; height: 36px; padding: 0; color: #087fa7; font: 400 20px/1 "Space Grotesk", sans-serif; background: #f3f9fc; border: 1px solid #d6e3f2; border-radius: 50%; cursor: pointer; }
+.tool-nav .music-toggle:hover, .tool-nav .music-toggle:focus-visible { color: #fff; background: #079cc8; border-color: #079cc8; outline: none; }
 .tool-hero h1 { color: #089bc7; }
 .tool-hero p { color: #344766; }
 .progress { position: relative; max-width: 720px; margin-bottom: 44px; color: #95a2b4; }

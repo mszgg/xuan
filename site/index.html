@@ -13,12 +13,13 @@
 </head>
 <body>
   <div class="stars" aria-hidden="true"></div>
+  <audio id="background-music" src="assets/bg.mp3" loop autoplay preload="auto"></audio>
   <header class="site-header">
     <a class="brand" href="#top"><span>✦</span> 灵机阁 <small>LINGJI PAVILION</small></a>
     <nav>
       <a href="#features">服务</a><a href="#how">方法</a><a href="#stories">口碑</a><a href="#pricing">方案</a>
     </nav>
-    <button class="outline small">登录</button>
+    <div class="site-actions"><button class="music-toggle" type="button" aria-pressed="false" aria-label="播放背景音乐" title="播放背景音乐">♫</button><button class="outline small">登录</button></div>
   </header>
 
   <main id="top">
@@ -64,5 +65,6 @@
   <footer><a class="brand" href="#top"><span>✦</span> 灵机阁</a><p>顺应天时，也听见自己的声音。</p><div>© 2026 LINGJI PAVILION · 概念静态网页</div></footer>
   <button class="back-to-top" type="button" aria-label="返回页面顶部" title="返回顶部">↑</button>
   <script src="script.js"></script>
+  <script src="music.js"></script>
 </body>
 </html>

@@ -143,6 +143,30 @@
   outline: none;
 }
 
+/* Header control for the looping background music. */
+.site-actions { display: flex; align-items: center; gap: 12px; }
+.music-toggle {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #f3d48d;
+  font: 400 21px/1 "Space Grotesk", sans-serif;
+  background: rgba(5, 12, 25, .72);
+  border: 1px solid rgba(232, 195, 112, .72);
+  border-radius: 50%;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.music-toggle:hover,
+.music-toggle:focus-visible {
+  color: #17120d;
+  background: #dfbd73;
+  outline: none;
+}
+
 /* Feature cards become active only while hovered or keyboard-focused. */
 .feature-card,
 .feature-card.featured {
