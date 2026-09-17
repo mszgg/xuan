@@ -158,6 +158,32 @@ API Worker 使用 Durable Object 对每个 `CF-Connecting-IP` 独立计数：
 
 限流阈值定义于 `worker/src/index.ts` 的 `RATE_LIMITS`。Turnstile 会提高机器人自动化成本，但不能替代限流或全站预算控制；若 AI 费用需要严格上限，应额外实现每小时/每天的全站调用额度。
 
+##### 限流实现原理
+
+限流不依赖浏览器 Cookie、前端 JavaScript 或 Cloudflare Dashboard 的单条 WAF 规则，而是在 API Worker 内调用名为 `RATE_LIMITER` 的 Cloudflare Durable Object 绑定：
+
+```text
+请求抵达 API Worker
+  → 读取 Cloudflare 写入的 CF-Connecting-IP（不使用客户端可伪造的 X-Forwarded-For）
+  → 用「请求路径:IP」生成唯一的 Durable Object ID
+  → 该对象读取自己的持久存储：{ startedAt, count }
+  → 若当前固定时间窗口尚未结束，count 加 1；否则开始新窗口
+  → count 未超过接口阈值：允许请求继续
+  → count 超过阈值：返回 HTTP 429 和 Retry-After，不调用 AI 网关
+```
+
+例如，同一 IP 对解读接口的对象键类似 `/api/v1/analyses/interpret:203.0.113.10`；不同 IP、不同接口的计数互不影响。计数由同一个 Durable Object 串行处理，因此同一 IP 的并发请求不能靠竞态条件绕过计数。
+
+相关文件和职责：
+
+| 文件 | 职责 |
+| --- | --- |
+| `worker/wrangler.toml` | 声明 `RATE_LIMITER` Durable Object binding 及首次迁移 `v1`。后台/部署输出显示这个名称是正常的；它是 Worker 的内部绑定，不是公开 API。 |
+| `worker/src/rate-limiter.ts` | 保存并更新 `{ startedAt, count }`，实现固定窗口计数。 |
+| `worker/src/index.ts` | 根据路径选取阈值、生成 `路径:IP` 键，并在业务计算和 AI 调用前拒绝超限请求。 |
+
+如要修改额度，仅修改 `worker/src/index.ts` 的 `RATE_LIMITS` 中的 `limit` 和 `windowMs`，然后重新部署 API Worker。不要删除或改名 `RATE_LIMITER` binding，也不要删除 Durable Object migration；这样会使既有部署无法找到限流对象。
+
 #### 发布顺序
 
 先保存两个 Key，再依次部署 API Worker 和静态站 Worker。API 会拒绝没有有效 Turnstile token 的解读请求。
