@@ -23,6 +23,8 @@ describe('calculateBazi', () => {
     expect(messages.user).toContain('"dayMaster":"己"');
     expect(messages.sources).toHaveLength(3);
     expect(messages.system).toContain('解读边界');
+    expect(messages.system).toContain('严禁在最终解读中出现任何计算机或实现术语');
+    expect(messages.system).toContain('可另作大运、流年的传统推演');
     expect(messages.system).not.toContain('research/upstream');
   });
 });
